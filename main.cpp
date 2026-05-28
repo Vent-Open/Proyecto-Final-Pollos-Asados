@@ -434,7 +434,7 @@ int main() {
         system("cls"); 
         gotoxy(0, 0);  
         
-        Color(BLACK, LMAGENTA);
+        Color(BLACK, YELLOW);
         imprimir_marco_linea();
         imprimir_marco_texto("Control De Ventas de los Pollos Asados)", 55, true);
         imprimir_marco_linea();
@@ -444,7 +444,7 @@ int main() {
         imprimir_marco_texto(" * [2] Gestionar Ordenes");
         Color(BLACK, LRED);
         imprimir_marco_texto(" * [3] Quit / Salir del Programa");
-        Color(BLACK, LMAGENTA);
+        Color(BLACK, YELLOW);
         imprimir_marco_linea();
         
         Color(BLACK, WHITE);
