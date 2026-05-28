@@ -2,7 +2,7 @@
                   SISTEMA DE CONTROL DE VENTA DE POLLOS ASADOS
                                   README.TXT
 *******************************************************************************
-* Desarrollador: Jorge Esteban Esteban Fausto Martinez 1690-25-697
+* Desarrollador: Jorge Esteban Fausto Martinez 1690-25-697
 * Año: 27/05/2026
 * Propósito: Proyecto Universitario de Refactorización y Persistencia Relacional
 *******************************************************************************
