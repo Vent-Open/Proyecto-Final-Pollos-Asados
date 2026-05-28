@@ -1,0 +1,33 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "cppbuild",
+            "label": "C/C++: g++.exe compilar con MySQL",
+            "command": "C:\\Desarrollo\\mingw64\\bin\\g++.exe",
+            "args": [
+                "-fdiagnostics-color=always",
+                "-g",
+                "${file}",
+
+                "-o", "${fileDirname}\\${fileBasenameNoExtension}.exe",
+
+
+                "-I", "C:\\Program Files\\MySQL\\MySQL Server 8.0\\include",
+                "-L", "C:\\Program Files\\MySQL\\MySQL Server 8.0\\lib",
+                "-lmysql"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Tarea para compilar proyectos con MySQL"
+        }
+    ],
+}
