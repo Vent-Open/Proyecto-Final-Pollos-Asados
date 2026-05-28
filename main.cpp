@@ -1,8 +1,10 @@
 /**
  * @file main.cpp
- * @brief Sistema de administración de Pollos Asados con diseño de terminal CCCaster y navegación fluida.
- * @author Esteban
- * @date 2026
+ * @brief Sistema de administración de venta de Pollos Asados.
+ * @details Utiliza EloquentORM para la persistencia en MySQL y la API de Windows 
+ * para el diseño estético de interfaz de usuario en consola.
+ * @author Jorge Esteban Fausto Martinez 1690_25-697
+ * @date 27/05/2026
  */
 
 #include <iostream>
@@ -16,21 +18,30 @@
 
 using namespace std;
 
-// =========================================================================
-// ENUMERACIÓN DE COLORES Y CONFIGURACIÓN DE VISUALIZACIÓN
-// =========================================================================
+/**
+ * @brief Enumeración de colores estándar de la consola de Windows.
+ */
 enum Colors {
     BLACK = 0, BLUE = 1, GREEN = 2, CYAN = 3, RED = 4, MAGENTA = 5, BROWN = 6, LGREY = 7,
     DGREY = 8, LBLUE = 9, LGREEN = 10, LCYAN = 11, LRED = 12, LMAGENTA = 13, YELLOW = 14, WHITE = 15
 };
 
+/**
+ * @brief Cambia el color del texto y del fondo de la consola de comandos.
+ * @param Background Código de color para el fondo de la pantalla.
+ * @param Text Código de color para los caracteres del texto.
+ */
 void Color(int Background, int Text) {
     HANDLE Console = GetStdHandle(STD_OUTPUT_HANDLE);
     int New_Color = Text + (Background * 16);
     SetConsoleTextAttribute(Console, New_Color);
 }
 
-// Mueve el cursor a una posición específica (X, Y) en el CMD
+/**
+ * @brief Mueve el cursor de la consola a una coordenada (X, Y) específica.
+ * @param x Posición en el eje horizontal (columnas).
+ * @param y Posición en el eje vertical (filas).
+ */
 void gotoxy(int x, int y) {
     HANDLE hcon = GetStdHandle(STD_OUTPUT_HANDLE);
     COORD dwPos;
@@ -39,15 +50,23 @@ void gotoxy(int x, int y) {
     SetConsoleCursorPosition(hcon, dwPos);
 }
 
-// Dibuja una línea completa de asteriscos
+/**
+ * @brief Imprime una línea horizontal compuesta por asteriscos para delimitar marcos.
+ * @param ancho Cantidad de caracteres de largo que tendrá la línea (por defecto 55).
+ */
 void imprimir_marco_linea(int ancho = 55) {
     cout << string(ancho, '*') << endl;
 }
 
-// Centra o alinea un texto dentro del marco de asteriscos
+/**
+ * @brief Ajusta, alinea e imprime una cadena de texto dentro de un marco de asteriscos.
+ * @param texto Cadena de caracteres que se desea mostrar.
+ * @param ancho Ancho total de la ventana o del recuadro (por defecto 55).
+ * @param centrado Define si el texto debe posicionarse al centro del marco.
+ */
 void imprimir_marco_texto(string texto, int ancho = 55, bool centrado = false) {
     cout << "* ";
-    int espacio_disponible = ancho - 4; // Restamos los bordes "* " y " *"
+    int espacio_disponible = ancho - 4; 
     
     if (texto.length() > espacio_disponible) {
         texto = texto.substr(0, espacio_disponible);
@@ -64,9 +83,14 @@ void imprimir_marco_texto(string texto, int ancho = 55, bool centrado = false) {
     cout << string(espacios_izq, ' ') << texto << string(espacios_der, ' ') << " *" << endl;
 }
 
-// =========================================================================
-// VERIFICACIONES DE BASE DE DATOS
-// =========================================================================
+/**
+ * @brief Realiza una consulta directa a MySQL para verificar la existencia de una llave primaria.
+ * @param db Instancia de la conexión activa a la base de datos.
+ * @param tabla Nombre de la tabla en la que se realizará la búsqueda.
+ * @param id Llave primaria (ID) numérica que se desea validar.
+ * @return true Si el ID ya existe en la base de datos.
+ * @return false Si el ID se encuentra disponible.
+ */
 bool id_existe(MySQLConexion &db, string tabla, int id) {
     string query = "SELECT id FROM " + tabla + " WHERE id = " + to_string(id);
     mysql_query(db.getConnection(), query.c_str());
@@ -76,30 +100,54 @@ bool id_existe(MySQLConexion &db, string tabla, int id) {
     return existe;
 }
 
-// =========================================================================
-// MODELOS ORM
-// =========================================================================
+
+/**
+ * @class Cliente
+ * @brief Modelo encargado de gestionar el mapeo y persistencia de la tabla 'clientes'.
+ */
 class Cliente : public EloquentORM {
 public:
+    /**
+     * @brief Constructor que inicializa el modelo vinculando la tabla y sus columnas.
+     * @param db Conexión a MySQL.
+     */
     Cliente(MySQLConexion &db) : EloquentORM(db, "clientes", {"id", "nombre", "telefono"}) {}
 };
 
+/**
+ * @class MenuCombo
+ * @brief Modelo encargado de gestionar el mapeo y persistencia de la tabla 'menu'.
+ */
 class MenuCombo : public EloquentORM {
 public:
+    /**
+     * @brief Constructor que inicializa el modelo vinculando la tabla y sus columnas de costos.
+     * @param db Conexión a MySQL.
+     */
     MenuCombo(MySQLConexion &db) : EloquentORM(db, "menu", {"id", "nombre_combo", "precio"}) {}
 };
 
+/**
+ * @class Orden
+ * @brief Modelo encargado de gestionar el mapeo y persistencia de la tabla 'ordenes'.
+ */
 class Orden : public EloquentORM {
 public:
+    /**
+     * @brief Constructor que inicializa el modelo vinculando la tabla y sus llaves foráneas.
+     * @param db Conexión a MySQL.
+     */
     Orden(MySQLConexion &db) : EloquentORM(db, "ordenes", {"id", "fecha", "cantidad", "total", "cliente_id", "menu_id"}) {}
 };
 
-// =========================================================================
-// VISTAS Y LOGICA CRUD (GESTIÓN DE CLIENTES)
-// =========================================================================
+
+/**
+ * @brief Recupera todos los registros de los clientes y los renderiza en un formato de lista enmarcada.
+ * @param db Conexión activa a la base de datos.
+ */
 void listar_clientes(MySQLConexion &db) {
-    system("cls"); // Limpia el rastro del menú anterior
-    gotoxy(0, 0);  // Asegura comenzar arriba a la izquierda
+    system("cls"); 
+    gotoxy(0, 0);  
     
     Cliente c(db);
     vector<map<string, string>> regs = c.getAll();
@@ -125,11 +173,15 @@ void listar_clientes(MySQLConexion &db) {
     cin.ignore(); cin.get();
 }
 
+/**
+ * @brief Despliega el submenú de gestión de clientes (CRUD) y captura las entradas del usuario.
+ * @param db Conexión activa a la base de datos.
+ */
 void gestionar_clientes(MySQLConexion &db) {
     int sub = 0;
     while (sub != 5) {
-        system("cls"); // Limpia la pantalla antes de dibujar el menú
-        gotoxy(0, 0);  // Reinicia las coordenadas de renderizado
+        system("cls"); 
+        gotoxy(0, 0);  
         
         Color(BLACK, YELLOW);
         imprimir_marco_linea();
@@ -213,9 +265,11 @@ void gestionar_clientes(MySQLConexion &db) {
     }
 }
 
-// =========================================================================
-// VISTAS Y LOGICA CRUD (GESTIÓN DE ÓRDENES)
-// =========================================================================
+
+/**
+ * @brief Muestra el historial completo de las ventas procesadas en la base de datos.
+ * @param db Conexión activa a la base de datos.
+ */
 void listar_ordenes(MySQLConexion &db) {
     system("cls"); gotoxy(0,0);
     Orden o(db);
@@ -242,6 +296,10 @@ void listar_ordenes(MySQLConexion &db) {
     cin.ignore(); cin.get();
 }
 
+/**
+ * @brief Gestiona el flujo del CRUD de órdenes calculando montos automáticamente según el menú de combos.
+ * @param db Conexión activa a la base de datos.
+ */
 void gestionar_ordenes(MySQLConexion &db) {
     int sub = 0;
     while (sub != 5) {
@@ -270,7 +328,7 @@ void gestionar_ordenes(MySQLConexion &db) {
         } 
         else if (sub == 2) {
             system("cls"); gotoxy(0,0);
-            int id, idCliente, idCombo, cantidad; string fecha;
+            int id, idCliente, idCombo, quantity; string fecha;
             Color(BLACK, LCYAN);
             imprimir_marco_linea();
             imprimir_marco_texto("GENERAR NUEVA ORDEN", 55, true);
@@ -291,7 +349,7 @@ void gestionar_ordenes(MySQLConexion &db) {
                 Color(BLACK, LRED); cout << "[!] Error: Combo inexistente.\n"; 
                 cout << "\nPresione cualquier tecla para continuar..."; cin.ignore(); cin.get(); continue;
             }
-            cout << ">>> Cantidad: "; cin >> cantidad;
+            cout << ">>> Cantidad: "; cin >> quantity;
             cout << ">>> Fecha (AAAA-MM-DD): "; cin.ignore(); getline(cin, fecha);
 
             MenuCombo m(db); double precio = 0.0;
@@ -299,10 +357,10 @@ void gestionar_ordenes(MySQLConexion &db) {
             for (const auto &c : combos) {
                 if (stoi(c.at("id")) == idCombo) { precio = stod(c.at("precio")); break; }
             }
-            double totalCalculado = precio * cantidad;
+            double totalCalculado = precio * quantity;
 
             string q = "INSERT INTO ordenes (id, fecha, cantidad, total, cliente_id, menu_id) VALUES (" 
-                       + to_string(id) + ", '" + fecha + "', " + to_string(cantidad) + ", " 
+                       + to_string(id) + ", '" + fecha + "', " + to_string(quantity) + ", " 
                        + to_string(totalCalculado) + ", " + to_string(idCliente) + ", " + to_string(idCombo) + ")";
             
             if (mysql_query(db.getConnection(), q.c_str()) == 0) {
@@ -321,11 +379,11 @@ void gestionar_ordenes(MySQLConexion &db) {
             cout << "\n>>> ID de orden a modificar: "; cin >> id;
             Orden o(db);
             if (o.find(id)) {
-                int n_id, idCliente, idCombo, cantidad; string fecha;
+                int n_id, idCliente, idCombo, quantity; string fecha;
                 cout << ">>> Nuevo ID Orden: "; cin >> n_id;
                 cout << ">>> Nuevo ID Cliente: "; cin >> idCliente;
                 cout << ">>> Nuevo ID Combo: "; cin >> idCombo;
-                cout << ">>> Nueva Cantidad: "; cin >> cantidad;
+                cout << ">>> Nueva Cantidad: "; cin >> quantity;
                 cout << ">>> Nueva Fecha (AAAA-MM-DD): "; cin.ignore(); getline(cin, fecha);
 
                 MenuCombo m(db); double precio = 0.0;
@@ -333,10 +391,10 @@ void gestionar_ordenes(MySQLConexion &db) {
                 for (const auto &c : combos) {
                     if (stoi(c.at("id")) == idCombo) { precio = stod(c.at("precio")); break; }
                 }
-                double totalCalculado = precio * cantidad;
+                double totalCalculado = precio * quantity;
 
                 string q = "UPDATE ordenes SET id = " + to_string(n_id) + ", fecha = '" + fecha + "', cantidad = " 
-                           + to_string(cantidad) + ", total = " + to_string(totalCalculado) + ", cliente_id = " 
+                           + to_string(quantity) + ", total = " + to_string(totalCalculado) + ", cliente_id = " 
                            + to_string(idCliente) + ", menu_id = " + to_string(idCombo) + " WHERE id = " + to_string(id);
                 
                 if (mysql_query(db.getConnection(), q.c_str()) == 0) {
@@ -363,21 +421,22 @@ void gestionar_ordenes(MySQLConexion &db) {
     }
 }
 
-// =========================================================================
-// MENU PRINCIPAL
-// =========================================================================
+/**
+ * @brief Función principal que inicializa la conexión a la DB y controla el bucle del menú maestro.
+ * @return int Código de estado de salida (0 para finalización exitosa, 1 para fallos de conexión).
+ */
 int main() {
     MySQLConexion db("root", "admin", "pollos_asados_db", "localhost", 3306);
     if (!db.open()) return 1;
 
     int opcion = 0;
     while (opcion != 3) {
-        system("cls"); // Mantiene el menú principal limpio y fijo en el tope
-        gotoxy(0, 0);  // Dibuja desde la esquina superior izquierda
+        system("cls"); 
+        gotoxy(0, 0);  
         
         Color(BLACK, LMAGENTA);
         imprimir_marco_linea();
-        imprimir_marco_texto("SISTEMA DE CONTROL ACADEMICO (POLLOS ASADOS)", 55, true);
+        imprimir_marco_texto("Control De Ventas de los Pollos Asados)", 55, true);
         imprimir_marco_linea();
         
         Color(BLACK, LBLUE);
