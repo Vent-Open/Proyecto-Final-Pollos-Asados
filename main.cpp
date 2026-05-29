@@ -436,7 +436,7 @@ int main() {
         
         Color(BLACK, YELLOW);
         imprimir_marco_linea();
-        imprimir_marco_texto("Control De Ventas de los Pollos Asados)", 55, true);
+        imprimir_marco_texto("Control De Ventas de los Pollos Asados", 55, true);
         imprimir_marco_linea();
         
         Color(BLACK, LBLUE);
